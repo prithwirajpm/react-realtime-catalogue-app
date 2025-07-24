@@ -1,91 +1,64 @@
 import React, { useEffect, useState } from "react";
-import {
-  startSignalRConnection,
-  invokeCatalogueUpdate,
-} from "../services/signalRService";
-import { useNavigate } from "react-router-dom";
-import imagesDefalut from "../assets/placeholder.png";
+import { Link } from "react-router-dom";
+import placeholderImage from "../assets/placeholder.png";
+import ActiveLastBreadcrumb from "./ActiveLastBreadcrumb";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [categories, setCategories] = useState("");
 
-  // useEffect(() => {
-  //   startSignalRConnection((productList) => {
-  //     setProducts(productList);
-  //     setLoading(false);
-  //   });
-
-  //   setTimeout(() => {
-  //     invokeCatalogueUpdate({
-  //       type: "Product",
-  //       selectedCategoryId: undefined,
-  //       index: 1,
-  //       numOfItems: 10,
-  //     });
-  //   }, 1000);
-  // }, []);
+  const categoryList = [
+    { name: "All Categories", value: "" },
+    { name: "Breakfast", value: "6006" },
+    { name: "Testsea food", value: "6002" },
+  ];
 
   useEffect(() => {
-    const savedProducts = localStorage.getItem("products");
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
-      setLoading(false);
+    const localProducts = localStorage.getItem("products");
+    if (localProducts) {
+      setProducts(JSON.parse(localProducts));
     }
-
-    startSignalRConnection((productList) => {
-      setProducts(productList);
-      localStorage.setItem("products", JSON.stringify(productList));
-      setLoading(false);
-    });
-
-    setTimeout(() => {
-      invokeCatalogueUpdate({
-        type: "Product",
-        selectedCategoryId: undefined,
-        index: 1,
-      });
-    }, 1000);
   }, []);
+
+  const filteredProducts =
+    categories === ""
+      ? products
+      : products.filter((item) => item?.categoryId == categories);
 
   return (
     <div>
-      <div className="m-4 flex justify-between">
-        <div>
-          <h1 className="font-bold text-2xl">ALL Product</h1>
-        </div>
-        <button className="bg-blue-400 text-white hover:bg-blue-300 p-2 rounded">
-          View All
-        </button>
-      </div>
+      <div className="flex justify-between">
+        <h2 className="text-xl font-bold m-4">All Products</h2>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className="product-grid">
-          {products.map((p, index) => (
-            <div className="custom-card shadow" key={index}>
-              <div>
-                <img
-                  src={p?.image || imagesDefalut}
-                  alt={p?.productName}
-                  style={{ width: "100%", height: "100px", objectFit: "cover" }}
-                  onError={(e) => (e.target.src = "/placeholder.png")}
-                />
-              </div>
-              <div className="p-1">
-                <label className="block font-bold text-sm text-gray-800">
-                  Name : {p?.productName}
-                </label>
-                <label className="block font-bold text-black text-sm">
-                  Rate : ₹{p?.mrp}
-                </label>
-              </div>
-            </div>
+        <select
+          className="border p-2 m-4"
+          value={categories}
+          onChange={(e) => setCategories(e.target.value)}
+        >
+          {categoryList.map((item, index) => (
+            <option key={index} value={item.value}>
+              {item.name}
+            </option>
           ))}
-        </div>
-      )}
+        </select>
+      </div>
+      <ActiveLastBreadcrumb />
+      <div className="product-grid">
+        {filteredProducts.map((p, index) => (
+          <div className="custom-card shadow" key={index}>
+            <img
+              src={p.image || placeholderImage}
+              alt={p.productName}
+              onError={(e) => (e.target.src = placeholderImage)}
+              style={{ width: "100%", height: "100px", objectFit: "cover" }}
+            />
+            <div className="p-1">
+              <label className="block font-bold text-sm">{p.productName}</label>
+              <label className="block text-sm text-gray-600">₹{p.mrp}</label>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

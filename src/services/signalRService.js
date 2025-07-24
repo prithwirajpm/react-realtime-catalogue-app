@@ -15,54 +15,69 @@ export const startSignalRConnection = async (onReceive) => {
     .build();
 
   connection.on("receivecatalogueupdate", (type, payload) => {
-    console.log("📦 Raw Data Received:", { type, payload });
+    console.log("Received:", { type, payload });
 
     if (type === "Product" && payload?.products?.products) {
-      onReceive(payload.products.products); // send only the array
-    } else {
-      console.warn("⚠️ Unrecognized payload format:", { type, payload });
+      const products = payload.products.products;
+      localStorage.setItem("products", JSON.stringify(products));
+      onReceive({ products });
+    }
+
+    if (type === "Category" && payload?.categories?.categories) {
+      const categories = payload.categories.categories;
+      localStorage.setItem("categories", JSON.stringify(categories));
+      onReceive({ categories });
     }
   });
 
   try {
     await connection.start();
-    console.log("✅ SignalR connected");
+    console.log("SignalR connected");
+
     await connection.send("JoinCompanyGroup", {
       companyId: COMPANY_ID,
       branchId: BRANCH_ID,
     });
+
+    console.log("Joined Company Group");
   } catch (err) {
-    console.error("❌ Connection error. Reconnecting in 5s", err);
+    console.error("SignalR connection failed:", err);
     setTimeout(() => startSignalRConnection(onReceive), 5000);
   }
 };
 
 export const invokeCatalogueUpdate = ({
   type = "Product",
-  selectedCategoryId,
+  selectedCategoryId = null, // maps to `id`
   index = 1,
-  numOfItems = 10,
+  numOfItems = null,
   customerId = null,
 }) => {
   if (
     !connection ||
     connection.state !== signalR.HubConnectionState.Connected
   ) {
-    console.warn("SignalR connection is not in a connected state.");
+    console.warn("SignalR not connected");
     return;
   }
-  return connection.invoke(
-    "SendCatalogueUpdate",
+
+  const payload = [
     type,
     COMPANY_ID,
     BRANCH_ID,
-    customerId,
-    selectedCategoryId,
-    index,
-    numOfItems,
+    customerId ?? null,
+    selectedCategoryId ?? null, // this is `id` in backend
+    index ?? null,
+    numOfItems ?? null,
     null,
     null,
     null,
-    null
-  );
+    null,
+  ];
+
+  console.log("Invoking SendCatalogueUpdate with:", payload);
+
+  return connection.invoke("SendCatalogueUpdate", ...payload).catch((err) => {
+    console.error("Server error on SendCatalogueUpdate:", err);
+  });
 };

@@ -65,7 +65,7 @@ const Home = () => {
         <p>Loading...</p>
       ) : (
         <div className="product-grid">
-          {products.map((p, index) => (
+          {products.slice(0, 10)?.map((p, index) => (
             <div className="custom-card shadow" key={index}>
               <div>
                 <img
