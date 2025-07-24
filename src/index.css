@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.custom-card {
+  width: 250px;
+  height: 175px;
+  border: 1px solid gray;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 20px;
+}
+
+.product-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
